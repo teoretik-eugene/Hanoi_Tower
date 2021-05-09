@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include <iostream>
 #include <windows.h>
 #include <locale>
@@ -77,7 +77,7 @@ public:
 
     Disk* pop() {
         Disk* ptr = tos_;
-            tos_ = ptr->previous_;
+        tos_ = ptr->previous_;
         count_--;
         return ptr;
     };
@@ -113,6 +113,7 @@ public:
     Stack* s_ptr = nullptr;
     Game(Stack *steck1) {
         s_ptr = steck1;
+        DrawPointer(x_);
     };
 
     void Move(Disk *disk_ch, int x, int y) {          // disk_ch - указатель на выбранный диск
@@ -139,6 +140,18 @@ public:
 
     }
 
+    /* Указатель на выбранную башню */
+    void DrawPointer(int x, int y = 17) {
+        char ptr = 30;
+        console_gotoxy(x, y);
+        std::cout << ptr;
+    }
+
+    void RemovePointer(int x, int y = 17) {
+        console_gotoxy(x, y);
+        std::cout << ' ';
+    }
+
     void Start(Stack *steck1, Stack *steck2, Stack *steck3) {
 
         console_hide_cursor();
@@ -158,7 +171,11 @@ public:
                     if (isUp) {         // Если не будет этой штуки с isUp, то будет ошибка
                         break;
                     }
+                    
                     if (s_ptr != nullptr) {
+                        Disk* d_ch = s_ptr->peek();
+                        if (d_ch == nullptr)
+                            break;
                         d_ptr = s_ptr->pop();
                         ReMove(d_ptr, x_, y_);
                         y_ = 4;
@@ -173,22 +190,35 @@ public:
                     if (isDown)
                         break;
 
-                    if (s_ptr != nullptr) {
+                    if (s_ptr != nullptr && d_ptr != nullptr) {
                         Disk *prev_disk = s_ptr->peek();
-                        if (prev_disk == nullptr)
-                            break;
-                        int prev_len = prev_disk->length_;
-                        int len = d_ptr->length_;
-                        if (prev_len > len) {
-                            // опустить
-                            //std::cout << "DOWN";
-                            int x_new = prev_disk->x_; int y_new = prev_disk->y_;
+                        if (prev_disk == nullptr) {
+                            int len = d_ptr->length_;
+                            int x_new = d_ptr->x_; int y_new = d_ptr->y_;
                             ReMove(d_ptr, x_, y_);
-                            x_ = x_new; y_ = y_new - 1;             // говницо получается
-                            Move(d_ptr, x_, y_);
-                            s_ptr->push(len, x_, y_ );
+                            s_ptr->push(len, x_, 15);       // Опускаем в самый низ
+                            //s_ptr = nullptr;
                             d_ptr = nullptr;
+                            isDown = true;
                             isUp = false;
+                            break;
+                        }
+                        else {
+                            if (prev_disk == nullptr)
+                                break;
+                            int prev_len = prev_disk->length_;
+                            int len = d_ptr->length_;
+                            if (prev_len > len) {
+                                // опустить
+                                //std::cout << "DOWN";
+                                int x_new = prev_disk->x_; int y_new = prev_disk->y_;
+                                ReMove(d_ptr, x_, y_);
+                                x_ = x_new; y_ = y_new - 1;             // говницо получается
+                                Move(d_ptr, x_, y_);
+                                s_ptr->push(len, x_, y_);
+                                d_ptr = nullptr;
+                                isUp = false;
+                            }
                         }
                     }
 
@@ -197,7 +227,9 @@ public:
                 case VK_LEFT:
                     if (d_ptr == nullptr) {
                         if (x_ > 12) {
+                            RemovePointer(x_);
                             x_ = x_ - 20;
+                            DrawPointer(x_);
                         }
                         switch (x_) {
                         case 12:
@@ -212,8 +244,10 @@ public:
                     else
                     {
                         if (x_ > 12) {
+                            RemovePointer(x_);
                             ReMove(d_ptr, x_, y_);
                             x_ = x_ - 20;
+                            DrawPointer(x_);
                         }
                         Move(d_ptr, x_, y_);
                         switch (x_) {
@@ -231,7 +265,9 @@ public:
                 case VK_RIGHT:
                     if (d_ptr == nullptr) {
                         if (x_ < 52) {
+                            RemovePointer(x_);
                             x_ = x_ + 20;
+                            DrawPointer(x_);
                         }
                         switch (x_) {
                         case 32:
@@ -247,8 +283,10 @@ public:
                     else {
                         //std::cout << "RIGHT" << std::endl;
                         if (x_ < 52) {
+                            RemovePointer(x_);
                             ReMove(d_ptr, x_, y_);
                             x_ = x_ + 20;
+                            DrawPointer(x_);
                         }
                         Move(d_ptr, x_, y_);
                         switch (x_) {
